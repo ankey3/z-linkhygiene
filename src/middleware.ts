@@ -2,20 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { RateLimiter } from "@/lib/rate-limit";
 
-// ---------------------------------------------------------------------------
-// Allowed origins for CORS (reads from env or defaults to same-origin only)
-// ---------------------------------------------------------------------------
-const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || "").split(",").map(s => s.trim()).filter(Boolean);
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
-// ---------------------------------------------------------------------------
-// Rate limiter – 15 requests per minute per IP on /api/* routes
-// ---------------------------------------------------------------------------
 const apiRateLimiter = new RateLimiter(60_000, 15);
 apiRateLimiter.startCleanup(60_000);
 
-// ---------------------------------------------------------------------------
-// Known bad-bot signatures (checked case-insensitively against User-Agent)
-// ---------------------------------------------------------------------------
 const BAD_BOT_SIGNATURES = [
   "sqlmap",
   "nikto",
@@ -27,27 +21,26 @@ const BAD_BOT_SIGNATURES = [
   "wfuzz",
 ];
 
-// ---------------------------------------------------------------------------
-// Helper: build the security headers applied to every response
-// ---------------------------------------------------------------------------
 function getSecurityHeaders(): HeadersInit {
   return {
     "Content-Security-Policy": [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://googlesyndication.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com",
+      "script-src-elem 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://googlesyndication.com https://googleads.g.doubleclick.net https://*.googlesyndication.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: https: blob:",
-      "connect-src 'self' https://pagead2.googlesyndication.com https://*.doubleclick.net https://googleads.g.doubleclick.net https://stats.g.doubleclick.net",
-      "frame-src https://pagead2.googlesyndication.com https://tpc.googlesyndication.com",
-      "child-src https://pagead2.googlesyndication.com",
+      "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.doubleclick.net https://googleads.g.doubleclick.net https://stats.g.doubleclick.net",
+      "frame-src 'self' https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://*.doubleclick.net",
+      "child-src 'self' https://pagead2.googlesyndication.com https://tpc.googlesyndication.com https://googleads.g.doubleclick.net",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
       "upgrade-insecure-requests",
     ].join("; "),
-    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "Strict-Transport-Security":
+      "max-age=31536000; includeSubDomains; preload",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -60,78 +53,71 @@ function getSecurityHeaders(): HeadersInit {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Helper: derive client IP from the request (handles X-Forwarded-For / CF)
-// ---------------------------------------------------------------------------
 function getClientIp(request: NextRequest): string {
   const forwarded = request.headers.get("x-forwarded-for");
+
   if (forwarded) {
     return forwarded.split(",")[0].trim();
   }
+
   const realIp = request.headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
+
+  if (realIp) {
+    return realIp.trim();
+  }
+
   return "127.0.0.1";
 }
 
-// ---------------------------------------------------------------------------
-// Helper: check if an origin is allowed for CORS
-// ---------------------------------------------------------------------------
 function isAllowedOrigin(origin: string | null): boolean {
   if (!origin) return false;
-  // No CORS_ORIGINS configured = same-origin only (browser handles this)
-  if (ALLOWED_ORIGINS.length === 0) return false;
+
+  if (ALLOWED_ORIGINS.length === 0) {
+    return false;
+  }
+
   return ALLOWED_ORIGINS.includes(origin);
 }
 
-// ---------------------------------------------------------------------------
-// Middleware
-// ---------------------------------------------------------------------------
 export function middleware(request: NextRequest) {
   const securityHeaders = getSecurityHeaders();
-
-  // ── 0. CORS handling for API routes ────────────────────────────────────
-  const origin = request.headers.get("origin");
   const { pathname } = request.nextUrl;
+  const origin = request.headers.get("origin");
 
-  if (pathname.startsWith("/api/")) {
-    // Preflight OPTIONS request
-    if (request.method === "OPTIONS") {
-      if (isAllowedOrigin(origin)) {
-        return new NextResponse(null, {
-          status: 204,
-          headers: {
-            ...securityHeaders,
-            "Access-Control-Allow-Origin": origin!,
-            "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "Content-Type, Authorization",
-            "Access-Control-Max-Age": "86400",
-            "Access-Control-Allow-Credentials": "true",
-          },
-        });
-      }
-      return new NextResponse(null, { status: 204, headers: securityHeaders });
-    }
+  if (pathname.startsWith("/api/") && request.method === "OPTIONS") {
+    const headers = new Headers(securityHeaders);
 
-    // Non-preflight: set CORS header only if origin is allowed
     if (isAllowedOrigin(origin)) {
-      const response = NextResponse.next();
-      for (const [key, value] of Object.entries(securityHeaders)) {
-        response.headers.set(key, value);
-      }
-      response.headers.set("Access-Control-Allow-Origin", origin!);
-      response.headers.set("Access-Control-Allow-Credentials", "true");
-      // Continue to rate limiting & bot protection below
+      headers.set("Access-Control-Allow-Origin", origin!);
+      headers.set(
+        "Access-Control-Allow-Methods",
+        "GET, POST, DELETE, OPTIONS",
+      );
+      headers.set(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization",
+      );
+      headers.set("Access-Control-Max-Age", "86400");
+      headers.set("Access-Control-Allow-Credentials", "true");
     }
+
+    return new NextResponse(null, {
+      status: 204,
+      headers,
+    });
   }
 
   const response = NextResponse.next();
 
-  // ── 1. Attach security headers to every response ──────────────────────
   for (const [key, value] of Object.entries(securityHeaders)) {
     response.headers.set(key, value);
   }
 
-  // ── 2. Bot protection ─────────────────────────────────────────────────
+  if (pathname.startsWith("/api/") && isAllowedOrigin(origin)) {
+    response.headers.set("Access-Control-Allow-Origin", origin!);
+    response.headers.set("Access-Control-Allow-Credentials", "true");
+  }
+
   const userAgent = request.headers.get("user-agent") ?? "";
 
   if (!userAgent) {
@@ -142,6 +128,7 @@ export function middleware(request: NextRequest) {
   }
 
   const lowerUA = userAgent.toLowerCase();
+
   for (const signature of BAD_BOT_SIGNATURES) {
     if (lowerUA.includes(signature)) {
       return new NextResponse("Forbidden: Bot detected", {
@@ -151,16 +138,14 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // ── 3. Rate limiting for /api/* routes ────────────────────────────────
   if (pathname.startsWith("/api/")) {
     const ip = getClientIp(request);
     const { limited, retryAfter } = apiRateLimiter.check(ip);
 
     if (limited) {
-      const rateLimitHeaders: HeadersInit = {
-        ...securityHeaders,
-        "Retry-After": String(retryAfter),
-      };
+      const rateLimitHeaders = new Headers(securityHeaders);
+      rateLimitHeaders.set("Retry-After", String(retryAfter));
+
       return new NextResponse("Too Many Requests", {
         status: 429,
         headers: rateLimitHeaders,
@@ -171,9 +156,6 @@ export function middleware(request: NextRequest) {
   return response;
 }
 
-// ---------------------------------------------------------------------------
-// Matcher – skip static assets & internal Next.js files
-// ---------------------------------------------------------------------------
 export const config = {
   matcher: [
     "/((?!_next/static|_next/image|favicon.ico|icon.png|og-image.png|robots.txt|sitemap.xml).*)",
