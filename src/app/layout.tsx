@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://linkhygiene.z.ai";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://linkhygiene.com";
 const siteName = "LinkHygiene";
-const adsenseId = process.env.NEXT_PUBLIC_ADSENSE_ID || "";
+const adsenseId = "ca-pub-3167331009919004";
 const siteDescription = "Free AI-powered SEO & link audit tool. Find every broken link, optimize for Google, ChatGPT, Perplexity, Gemini, and AI Overviews. Crawl up to 70 pages. 100% free, no sign-up required.";
 
 export const metadata: Metadata = {
@@ -24,6 +24,10 @@ export const metadata: Metadata = {
   title: {
     default: `${siteName} - Free AI-Powered Website Link & SEO Audit Tool`,
     template: `%s | ${siteName}`,
+  },
+  description: siteDescription,
+  other: {
+    "google-adsense-account": adsenseId,
   },
   description: siteDescription,
   keywords: [
