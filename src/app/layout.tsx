@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,10 +15,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.linkhygiene.com";
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.linkhygiene.com";
 const siteName = "LinkHygiene";
 const adsenseId = "ca-pub-3167331009919004";
-const siteDescription = "Free AI-powered SEO & link audit tool. Find every broken link, optimize for Google, ChatGPT, Perplexity, Gemini, and AI Overviews. Crawl up to 70 pages. 100% free, no sign-up required.";
+const googleAnalyticsId = "G-25Z437B3PL";
+const siteDescription =
+  "Free AI-powered SEO & link audit tool. Find every broken link, optimize for Google, ChatGPT, Perplexity, Gemini, and AI Overviews. Crawl up to 70 pages. 100% free, no sign-up required.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -60,7 +64,7 @@ export const metadata: Metadata = {
   creator: "LinkHygiene",
   publisher: "LinkHygiene",
   other: {
-    ...(adsenseId ? { 'google-adsense-account': adsenseId } : {}),
+    ...(adsenseId ? { "google-adsense-account": adsenseId } : {}),
   },
   icons: {
     icon: "/icon.png",
@@ -227,17 +231,36 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#f8fafc] text-foreground`}
       >
+                <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){window.dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${googleAnalyticsId}');
+          `}
+        </Script>
+
+        <Script
+          id="google-adsense"
+          async
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
+          crossOrigin="anonymous"
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
           cookieOptions={{
-            name: 'theme',
+            name: "theme",
             httpOnly: false, // JS needs to read for SSR hydration
             secure: true,
-            sameSite: 'lax',
-            path: '/',
+            sameSite: "lax",
+            path: "/",
             maxAge: 365 * 24 * 60 * 60, // 1 year
           }}
         >
