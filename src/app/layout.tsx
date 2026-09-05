@@ -15,8 +15,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://www.linkhygiene.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://linkhygiene.com";
 const siteName = "LinkHygiene";
 const adsenseId = "ca-pub-3167331009919004";
 const googleAnalyticsId = "G-25Z437B3PL";
