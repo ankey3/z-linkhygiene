@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import Script from "next/script";
+import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,10 +29,7 @@ export const metadata: Metadata = {
     template: `%s | ${siteName}`,
   },
   description: siteDescription,
-  other: {
-    "google-adsense-account": adsenseId,
-  },
-  description: siteDescription,
+
   keywords: [
     "SEO audit tool",
     "broken link checker",
@@ -213,28 +210,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="canonical" href={siteUrl} />
-        {adsenseId && (
-          <script
-            async
-            src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
-            crossOrigin="anonymous"
-          />
-        )}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#f8fafc] text-foreground`}
       >
-                <Script
+        {/* Google Analytics */}
+        <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
           strategy="afterInteractive"
         />
-        <Script id="google-analytics" strategy="afterInteractive">
+
+        <Script
+          id="google-analytics"
+          strategy="afterInteractive"
+        >
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){window.dataLayer.push(arguments);}
@@ -243,12 +231,15 @@ export default function RootLayout({
           `}
         </Script>
 
+        {/* Google AdSense */}
         <Script
           id="google-adsense"
           async
+          strategy="afterInteractive"
           src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${adsenseId}`}
           crossOrigin="anonymous"
         />
+
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
@@ -256,16 +247,28 @@ export default function RootLayout({
           disableTransitionOnChange
           cookieOptions={{
             name: "theme",
-            httpOnly: false, // JS needs to read for SSR hydration
+            httpOnly: false,
             secure: true,
             sameSite: "lax",
             path: "/",
-            maxAge: 365 * 24 * 60 * 60, // 1 year
+            maxAge: 365 * 24 * 60 * 60,
           }}
         >
           {children}
-          <Toaster richColors position="bottom-right" />
+
+          <Toaster
+            richColors
+            position="bottom-right"
+          />
         </ThemeProvider>
+
+        {/* JSON-LD */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd),
+          }}
+        />
       </body>
     </html>
   );
