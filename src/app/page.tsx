@@ -11,7 +11,11 @@ import { ContentAndLinksAnalysis } from '@/components/audit/ContentAndLinksAnaly
 import { SearchEngineVisibility } from '@/components/audit/SearchEngineVisibility';
 import { PerPageDrillDown } from '@/components/audit/PerPageDrillDown';
 import { BrokenLinksDebugger } from '@/components/audit/BrokenLinksDebugger';
+import { CompetitorComparison } from '@/components/audit/CompetitorComparison';
+import { BulkAuditPanel } from '@/components/audit/BulkAuditPanel';
 import { ScoreImprovementTips } from '@/components/audit/ScoreImprovementTips';
+import { AiRecommendations } from '@/components/audit/AiRecommendations';
+import { PerformanceGauges } from '@/components/audit/PerformanceGauges';
 import { Footer } from '@/components/audit/Footer';
 import { AuditComparison } from '@/components/audit/AuditComparison';
 import { BackToTop } from '@/components/audit/BackToTop';
@@ -331,6 +335,8 @@ function HomePage() {
                     </motion.div>
                   </motion.div>
 
+                  <motion.div {...fadeIn}><PerformanceGauges audit={currentAudit} /></motion.div>
+
                   <div className="ad-slot no-print flex items-center justify-center rounded-lg py-4">
                     <span className="text-[10px] text-gray-300 dark:text-gray-700">Advertisement · 728×90</span>
                   </div>
@@ -338,6 +344,7 @@ function HomePage() {
                   <motion.div {...fadeIn}><SeoSegments audit={currentAudit} /></motion.div>
                   <motion.div {...fadeIn}><AiSearchReadiness audit={currentAudit} /></motion.div>
                   <motion.div {...fadeIn}><ScoreImprovementTips audit={currentAudit} /></motion.div>
+                  <motion.div {...fadeIn}><AiRecommendations audit={currentAudit} /></motion.div>
                   <motion.div {...fadeIn}><ContentAndLinksAnalysis audit={currentAudit} /></motion.div>
 
                   <div className="ad-slot no-print flex items-center justify-center rounded-lg py-4">
@@ -347,6 +354,8 @@ function HomePage() {
                   <motion.div {...fadeIn}><SearchEngineVisibility audit={currentAudit} /></motion.div>
                   <motion.div {...fadeIn}><PerPageDrillDown audit={currentAudit} /></motion.div>
                   <motion.div {...fadeIn}><BrokenLinksDebugger audit={currentAudit} /></motion.div>
+                  <motion.div {...fadeIn}><CompetitorComparison audit={currentAudit} /></motion.div>
+                  <motion.div {...fadeIn}><BulkAuditPanel audit={currentAudit} /></motion.div>
                 </div>
               </motion.div>
             )}

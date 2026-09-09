@@ -30,37 +30,38 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
-
-# Security
+# env files — never commit secrets
 .env
 .env.local
 .env.production.local
 .env.development.local
+.env*.local
 
-# Database files — never commit user data
+# Database files (local SQLite if used for dev)
 /db/
 *.db
 *.db-journal
 *.db-wal
 
-# vercel
+# Vercel
 .vercel
 
-
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
-local-*
-.claude
-.z-ai-config
+
+# Logs
 *.log
 dev.log
 dev.out.log
+server.log
+
+# Misc
+local-*
+.claude
+.z-ai-config
 test
 prompt
 
-server.log
 # Skills directory
 /skills/

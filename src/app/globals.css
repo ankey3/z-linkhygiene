@@ -451,6 +451,69 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* ===== BULK AUDIT & MICRO-INTERACTION ENHANCEMENTS ===== */
+
+/* btn-glow — subtle pulsing glow animation for CTA buttons (idle state) */
+@keyframes btn-glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 rgba(6, 182, 212, 0.4),
+      0 4px 14px -4px rgba(6, 182, 212, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 0 6px rgba(6, 182, 212, 0.15),
+      0 4px 14px -4px rgba(6, 182, 212, 0.4);
+  }
+}
+.btn-glow {
+  animation: btn-glow-pulse 2.5s ease-in-out infinite;
+}
+
+/* confetti-burst — keyframe animation for scan completion celebration */
+@keyframes confetti-burst-keyframe {
+  0% {
+    transform:
+      translate(0, 0)
+      rotate(0deg)
+      scale(1);
+    opacity: 1;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform:
+      translate(
+        calc(cos(var(--burst-angle, 0deg)) * var(--burst-velocity, 50px)),
+        calc(sin(var(--burst-angle, 0deg)) * var(--burst-velocity, 50px) - 30px)
+      )
+      rotate(var(--burst-rotation, 180deg))
+      scale(0.2);
+    opacity: 0;
+  }
+}
+.confetti-burst {
+  animation: confetti-burst-keyframe 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* score-tooltip — styled tooltip for score explanations */
+.score-tooltip {
+  background: linear-gradient(135deg, #0e7490, #0f766e) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 10px !important;
+  box-shadow:
+    0 8px 24px -4px rgba(6, 182, 212, 0.25),
+    0 0 0 1px rgba(6, 182, 212, 0.1) !important;
+  padding: 10px 14px !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  color: #f0fdfa !important;
+}
+.score-tooltip [data-slot="tooltip-arrow"] {
+  fill: #0e7490 !important;
+}
+
 /* Mobile menu slide down */
 @keyframes slide-down {
   from { opacity: 0; max-height: 0; }

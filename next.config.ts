@@ -13,12 +13,34 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  output: "standalone",
-  poweredByHeader: false, // Remove X-Powered-By header
+  // Vercel handles output natively — no "standalone" needed
+  poweredByHeader: false,
+
+  // React strict mode off for production stability with framer-motion
   reactStrictMode: false,
+
+  // Allow build to proceed with type issues (existing behavior)
   typescript: {
     ignoreBuildErrors: true,
   },
+
+  // Optimize for Vercel serverless
+  experimental: {
+    // Optimize package imports for smaller bundles
+    optimizePackageImports: [
+      "lucide-react",
+      "recharts",
+      "framer-motion",
+      "@radix-ui/react-icons",
+    ],
+  },
+
+  // Image optimization for Vercel
+  images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 60,
+  },
+
   async headers() {
     return [
       {

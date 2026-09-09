@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, XCircle, ChevronsUpDown, ChevronsDownUp } from 'lucide-react';
 import { useAuditStore, type AuditResult, type SeoCheck } from '@/lib/store';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function StatusIcon({ status }: { status: 'PASS' | 'WARN' | 'FAIL' }) {
   switch (status) {
@@ -31,22 +33,40 @@ function StatusBadge({ status }: { status: 'PASS' | 'WARN' | 'FAIL' }) {
   );
 }
 
-function CheckRow({ check }: { check: SeoCheck }) {
+function CheckRow({ check, expanded }: { check: SeoCheck; expanded: boolean }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-gray-100 bg-white p-3 transition-colors hover:bg-gray-50/50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800/50">
+    <motion.div
+      layout
+      className="flex items-start gap-3 rounded-lg border border-gray-100 bg-white p-3 transition-colors hover:bg-gray-50/50 dark:border-gray-800 dark:bg-gray-900 dark:hover:bg-gray-800/50"
+    >
       <StatusIcon status={check.status} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{check.name}</span>
           <StatusBadge status={check.status} />
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-gray-500 dark:text-gray-400">{check.detail}</p>
+        <AnimatePresence initial={false}>
+          {expanded && (
+            <motion.p
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2, ease: 'easeInOut' }}
+              className="mt-1 overflow-hidden text-xs leading-relaxed text-gray-500 dark:text-gray-400"
+            >
+              {check.detail}
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
 export function SeoSegments({ audit }: { audit: AuditResult | null }) {
+  const [allExpanded, setAllExpanded] = useState(true);
+  const [activeTab, setActiveTab] = useState('on-page');
+
   if (!audit) return null;
 
   const onPage = audit.seoChecks.filter((c) => c.category === 'on-page');
@@ -63,15 +83,35 @@ export function SeoSegments({ audit }: { audit: AuditResult | null }) {
   const offCounts = getCounts(offPage);
   const techCounts = getCounts(technical);
 
+  const currentChecks = activeTab === 'on-page' ? onPage : activeTab === 'off-page' ? offPage : technical;
+
   return (
     <Card className="card-hover-lift border-cyan-100 shadow-md shadow-cyan-50/50 dark:border-gray-800 dark:shadow-none">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-bold text-gray-900 dark:text-white">
-          SEO Segments Analysis
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-bold text-gray-900 dark:text-white">
+            SEO Segments Analysis
+          </CardTitle>
+          <button
+            onClick={() => setAllExpanded(!allExpanded)}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm transition-all hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:border-cyan-800 dark:hover:bg-cyan-950 dark:hover:text-cyan-400"
+          >
+            {allExpanded ? (
+              <>
+                <ChevronsDownUp className="h-3.5 w-3.5" />
+                Collapse All
+              </>
+            ) : (
+              <>
+                <ChevronsUpDown className="h-3.5 w-3.5" />
+                Expand All
+              </>
+            )}
+          </button>
+        </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="on-page" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-4 grid w-full grid-cols-3 bg-gray-100 p-1 dark:bg-gray-800">
             <TabsTrigger
               value="on-page"
@@ -103,25 +143,31 @@ export function SeoSegments({ audit }: { audit: AuditResult | null }) {
           </TabsList>
 
           <TabsContent value="on-page">
-            <div className="flex flex-col gap-2 max-h-96 overflow-y-auto custom-scrollbar">
-              {onPage.map((check) => (
-                <CheckRow key={check.name} check={check} />
-              ))}
-            </div>
+            <motion.div layout className="flex flex-col gap-2 max-h-96 overflow-y-auto custom-scrollbar">
+              <AnimatePresence initial={false}>
+                {onPage.map((check) => (
+                  <CheckRow key={check.name} check={check} expanded={allExpanded} />
+                ))}
+              </AnimatePresence>
+            </motion.div>
           </TabsContent>
           <TabsContent value="off-page">
-            <div className="flex flex-col gap-2 max-h-96 overflow-y-auto custom-scrollbar">
-              {offPage.map((check) => (
-                <CheckRow key={check.name} check={check} />
-              ))}
-            </div>
+            <motion.div layout className="flex flex-col gap-2 max-h-96 overflow-y-auto custom-scrollbar">
+              <AnimatePresence initial={false}>
+                {offPage.map((check) => (
+                  <CheckRow key={check.name} check={check} expanded={allExpanded} />
+                ))}
+              </AnimatePresence>
+            </motion.div>
           </TabsContent>
           <TabsContent value="technical">
-            <div className="flex flex-col gap-2 max-h-96 overflow-y-auto custom-scrollbar">
-              {technical.map((check) => (
-                <CheckRow key={check.name} check={check} />
-              ))}
-            </div>
+            <motion.div layout className="flex flex-col gap-2 max-h-96 overflow-y-auto custom-scrollbar">
+              <AnimatePresence initial={false}>
+                {technical.map((check) => (
+                  <CheckRow key={check.name} check={check} expanded={allExpanded} />
+                ))}
+              </AnimatePresence>
+            </motion.div>
           </TabsContent>
         </Tabs>
       </CardContent>

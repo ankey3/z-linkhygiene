@@ -16,7 +16,12 @@ const REQUIRED_ENV_VARS: EnvSpec[] = [
   {
     name: "DATABASE_URL",
     required: true,
-    description: "SQLite database file path (e.g., file:/app/data/linkhygiene.db)",
+    description: "Neon PostgreSQL connection string (pooled, e.g., postgres://user:pass@ep-xxx.region.aws.neon.tech/dbname)",
+  },
+  {
+    name: "DIRECT_URL",
+    required: true,
+    description: "Neon direct connection string for Prisma migrations (non-pooled)",
   },
 ];
 
@@ -61,10 +66,20 @@ export function validateEnv(): void {
   ${missing.join(", ")}
 
   The application cannot start without these variables.
-  Please set them in your .env file or deployment environment.
+  Please set them in your Vercel project dashboard:
+    Settings → Environment Variables
 ═══════════════════════════════════════════════════════════
 `);
     process.exit(1);
+  }
+
+  // Validate DATABASE_URL format (should be postgres:// or postgresql://)
+  const dbUrl = process.env.DATABASE_URL;
+  if (dbUrl && !dbUrl.startsWith("postgres") && !dbUrl.startsWith("postgresql")) {
+    console.warn(
+      `[env] WARNING: DATABASE_URL does not appear to be a PostgreSQL connection string. ` +
+      `Expected format: postgres://user:pass@host/db or postgresql://user:pass@host/db`
+    );
   }
 
   // Log configured optional vars in development for debugging

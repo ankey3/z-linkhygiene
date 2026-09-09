@@ -13,11 +13,58 @@ interface ScanSummaryProps {
   onScanComplete: () => void;
 }
 
+// ─── Confetti Particle Component ────────────────────────────────
+
+const CONFETTI_COLORS = ['#06b6d4', '#14b8a6', '#22c55e', '#f97316', '#a855f7', '#ef4444', '#eab308'];
+
+function ConfettiBurst({ active }: { active: boolean }) {
+  // Generate particles lazily so we don't call setState inside an effect
+  const particles = active
+    ? Array.from({ length: 24 }, (_, i) => ({
+        id: i,
+        x: 50 + (Math.random() - 0.5) * 10,
+        y: 50,
+        color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
+        size: 4 + Math.random() * 4,
+        angle: Math.random() * 360,
+        velocity: 40 + Math.random() * 60,
+        rotation: Math.random() * 360,
+      }))
+    : [];
+
+  if (!active) return null;
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl" aria-hidden>
+      {particles.map((p) => (
+        <span
+          key={p.id}
+          className="confetti-burst absolute rounded-sm"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
+            backgroundColor: p.color,
+            '--burst-angle': `${p.angle}deg`,
+            '--burst-velocity': `${p.velocity}px`,
+            '--burst-rotation': `${p.rotation}deg`,
+            animationDelay: `${p.id * 15}ms`,
+          } as React.CSSProperties}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── Main Component ─────────────────────────────────────────────
+
 export function ScanSummaryCard({ onScanComplete }: ScanSummaryProps) {
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [crawlAll, setCrawlAll] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
   const { currentAudit, setScanning, setCurrentAudit, addToHistory, crawlProgress, setCrawlProgress } = useAuditStore();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -33,7 +80,6 @@ export function ScanSummaryCard({ onScanComplete }: ScanSummaryProps) {
           let newTitle = prev.currentPageTitle;
 
           if (prev.status === 'discovering') {
-            // Simulate discovery phase
             newFound = Math.min(prev.pagesFound + 2, 40);
             newTitle = 'Discovering pages...';
             if (newFound >= 5) {
@@ -123,6 +169,11 @@ export function ScanSummaryCard({ onScanComplete }: ScanSummaryProps) {
       addToHistory(audit);
       setCrawlProgress(null);
       toast.success(`Audit complete! ${crawlAll ? `${audit.pagesCrawled} pages crawled.` : 'Single page scanned.'}`);
+
+      // Trigger confetti celebration
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 1500);
+
       onScanComplete();
     } catch {
       toast.error('Network error. Please try again.');
@@ -156,7 +207,10 @@ export function ScanSummaryCard({ onScanComplete }: ScanSummaryProps) {
           Audit Overview
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="relative p-6">
+        {/* Confetti celebration overlay */}
+        <ConfettiBurst active={showConfetti} />
+
         {/* URL Input Row */}
         <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
@@ -179,7 +233,7 @@ export function ScanSummaryCard({ onScanComplete }: ScanSummaryProps) {
                 : crawlAll
                   ? 'bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-700 hover:to-teal-600 hover:shadow-lg hover:shadow-cyan-200 dark:hover:shadow-none'
                   : 'bg-cyan-600 hover:bg-cyan-700 hover:shadow-lg hover:shadow-cyan-200 dark:hover:shadow-none'
-            }`}
+            } ${!loading && !url.trim() ? 'btn-glow' : ''}`}
           >
             {ripplePos && <span className="ripple-effect" style={{ left: ripplePos.x, top: ripplePos.y } as React.CSSProperties} />}
             {loading ? (
