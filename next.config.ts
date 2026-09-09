@@ -13,7 +13,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // Vercel handles output natively — no "standalone" needed
+  output: "standalone",
   poweredByHeader: false, // Remove X-Powered-By header
   reactStrictMode: false,
   typescript: {
